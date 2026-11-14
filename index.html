@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>機密訊號解析器</title>
+<style>
+  body {
+    background-color: #121212;
+    color: #e0e0e0;
+    font-family: "Microsoft JhengHei", sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+  }
+  .container {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    background: #1e1e1e;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.8);
+  }
+  canvas {
+    border: 2px solid #444;
+    border-radius: 8px;
+  }
+  .controls {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  button {
+    background-color: #2c2c2c;
+    color: #ffffff;
+    border: 1px solid #555;
+    padding: 12px 24px;
+    font-size: 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  button:hover {
+    background-color: #444;
+    border-color: #888;
+  }
+  .status {
+    margin-top: 20px;
+    font-family: monospace;
+    color: #00ff88;
+  }
+</style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- 動態生成的 RGB 圖片區塊 -->
+    <canvas id="signalImage" width="300" height="300"></canvas>
+
+    <!-- 旁邊的三個純文字按鈕（完全沒有 R、G、B 字樣） -->
+    <div class="controls">
+      <button onclick="changeLayer(1)">啟動第一層頻段</button>
+      <button onclick="changeLayer(2)">切換第二層頻段</button>
+      <button onclick="changeLayer(3)">解析第三層頻段</button>
+    </div>
+  </div>
+
+  <div class="status" id="statusText">[系統待機中] 請點擊右側純文字指令以過濾影像訊號...</div>
+
+<script>
+  const canvas = document.getElementById('signalImage');
+  const ctx = canvas.getContext('2d');
+  const statusText = document.getElementById('statusText');
+
+  // 預設顯示三色交疊的神秘圖形
+  function drawDefault() {
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, 300, 300);
+    ctx.globalCompositeOperation = 'screen';
+
+    ctx.fillStyle = 'rgb(255, 0, 0)';
+    ctx.beginPath(); ctx.arc(150, 110, 70, 0, Math.PI * 2); ctx.fill();
+
+    ctx.fillStyle = 'rgb(0, 255, 0)';
+    ctx.beginPath(); ctx.arc(115, 175, 70, 0, Math.PI * 2); ctx.fill();
+
+    ctx.fillStyle = 'rgb(0, 0, 255)';
+    ctx.beginPath(); ctx.arc(185, 175, 70, 0, Math.PI * 2); ctx.fill();
+
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  // 點擊按鈕切換不同通道與隱藏線索
+  function changeLayer(mode) {
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, 300, 300);
+    ctx.font = 'bold 20px monospace';
+    ctx.textAlign = 'center';
+
+    if (mode === 1) {
+      ctx.fillStyle = 'rgb(255, 0, 0)';
+      ctx.beginPath(); ctx.arc(150, 150, 90, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#000';
+      ctx.fillText('線索代碼：094', 150, 158);
+      statusText.innerText = '[狀態更新] 第一層高頻訊號已隔離。';
+    } else if (mode === 2) {
+      ctx.fillStyle = 'rgb(0, 255, 0)';
+      ctx.beginPath(); ctx.arc(150, 150, 90, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#000';
+      ctx.fillText('線索代碼：ERR', 150, 158);
+      statusText.innerText = '[狀態更新] 第二層中頻訊號已隔離。';
+    } else if (mode === 3) {
+      ctx.fillStyle = 'rgb(0, 0, 255)';
+      ctx.beginPath(); ctx.arc(150, 150, 90, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.fillText('線索代碼：882', 150, 158);
+      statusText.innerText = '[狀態更新] 第三層低頻訊號已隔離。';
+    }
+  }
+
+  drawDefault();
+</script>
+</body>
+</html>
