@@ -2,176 +2,102 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>三原色疊層訊號解析器</title>
+<title>三原色文字疊層加密</title>
 <style>
   body {
-    background-color: #0d0d0d;
-    color: #e0e0e0;
-    font-family: "Microsoft JhengHei", monospace;
+    background-color: #000000;
+    color: #cccccc;
+    font-family: "Microsoft JhengHei", sans-serif;
     display: flex;
-    flex-direction: column;
-    align-items: center;
     justify-content: center;
+    align-items: center;
     height: 100vh;
     margin: 0;
   }
-  .panel {
+  .box {
     display: flex;
     align-items: center;
-    gap: 30px;
-    background: #181818;
-    padding: 30px;
+    gap: 25px;
     border: 1px solid #333;
-    border-radius: 10px;
-    box-shadow: 0 0 30px rgba(0, 0, 0, 0.9);
+    padding: 25px;
+    background-color: #0a0a0a;
   }
   canvas {
-    border: 2px solid #444;
-    background-color: #000;
+    border: 1px solid #444;
+    background-color: #000000;
   }
-  .controls {
+  .btn-group {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
   }
   button {
-    background-color: #252525;
-    color: #f0f0f0;
+    background-color: #1a1a1a;
+    color: #eeeeee;
     border: 1px solid #555;
-    padding: 14px 24px;
+    padding: 12px 20px;
     font-size: 16px;
-    font-weight: bold;
-    border-radius: 6px;
     cursor: pointer;
-    transition: all 0.2s;
   }
   button:hover {
-    background-color: #3a3a3a;
-    border-color: #999;
-  }
-  button.active {
-    background-color: #e0e0e0;
-    color: #000;
-    border-color: #fff;
-  }
-  .log {
-    margin-top: 20px;
-    font-size: 14px;
-    color: #888;
+    background-color: #333333;
   }
 </style>
 </head>
 <body>
 
-  <div class="panel">
-    <!-- 真實三色文字重疊畫布 -->
-    <canvas id="secretCanvas" width="460" height="220"></canvas>
+<div class="box">
+  <!-- 純文字重疊畫布（絕無任何色塊圓圈） -->
+  <canvas id="textCanvas" width="480" height="160"></canvas>
 
-    <!-- 右側三個純文字按鍵（絕無 R/G/B 字樣） -->
-    <div class="controls">
-      <button id="btn1" onclick="filterChannel('R')">提取第一組暗號</button>
-      <button id="btn2" onclick="filterChannel('G')">提取第二組暗號</button>
-      <button id="btn3" onclick="filterChannel('B')">提取第三組暗號</button>
-      <button id="btnAll" onclick="filterChannel('ALL')">還原重疊干擾狀態</button>
-    </div>
+  <!-- 右側純文字按鍵（絕無 RGB 英文字母） -->
+  <div class="btn-group">
+    <button onclick="showLayer('RED')">過濾第一組訊號</button>
+    <button onclick="showLayer('GREEN')">過濾第二組訊號</button>
+    <button onclick="showLayer('BLUE')">過濾第三組訊號</button>
+    <button onclick="showLayer('ALL')">顯示全部重疊</button>
   </div>
-
-  <div class="log" id="statusLog">[訊號狀態] 三組文字數據高度重疊，無法直接辨識。</div>
+</div>
 
 <script>
-  const canvas = document.getElementById('secretCanvas');
+  const canvas = document.getElementById('textCanvas');
   const ctx = canvas.getContext('2d');
-  const statusLog = document.getElementById('statusLog');
 
-  // 這裡可以自由修改你要疊在一起的三串文字！
-  const textRed   = "第一組密碼：094-ALPHA";
-  const textGreen = "第二組密碼：ERR-404-X";
-  const textBlue  = "第三組密碼：NEXT-STAGE";
+  // 你要疊在一起的三串文字（直接改引號裡的字即可）
+  const str1 = "第一串秘密：密碼是 8492";
+  const str2 = "第二串秘密：鑰匙在抽屜裡";
+  const str3 = "第三串秘密：快去檢查電腦";
 
-  // 建立一個離屏畫布，用來精準計算 R、G、B 三層疊加後的像素
-  const offCanvas = document.createElement('canvas');
-  offCanvas.width = canvas.width;
-  offCanvas.height = canvas.height;
-  const offCtx = offCanvas.getContext('2d');
+  function showLayer(mode) {
+    // 每次重畫前先清空成純黑背景
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // 繪製三層完全重疊的 RGB 文字
-  function buildLayeredImage() {
-    offCtx.fillStyle = '#000000';
-    offCtx.fillRect(0, 0, offCanvas.width, offCanvas.height);
+    // 開啟光學色光疊加模式（紅+綠=黃、三色重疊=白）
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.font = 'bold 36px "Microsoft JhengHei", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
 
-    // 使用 'lighter' 混合模式，讓紅+綠=黃、紅+藍=洋紅、三色重疊=純白，就像真實的光學濾鏡！
-    offCtx.globalCompositeOperation = 'lighter';
-    offCtx.font = 'bold 34px "Microsoft JhengHei", sans-serif';
-    offCtx.textAlign = 'center';
-    offCtx.textBaseline = 'middle';
-
-    // 第一串文字（寫入紅色通道，位置微幅交錯增加干擾感）
-    offCtx.fillStyle = 'rgb(255, 0, 0)';
-    offCtx.fillText(textRed, 230, 105);
-
-    // 第二串文字（寫入綠色通道，直接疊在上面）
-    offCtx.fillStyle = 'rgb(0, 255, 0)';
-    offCtx.fillText(textGreen, 230, 110);
-
-    // 第三串文字（寫入藍色通道，直接疊在上面）
-    offCtx.fillStyle = 'rgb(0, 0, 255)';
-    offCtx.fillText(textBlue, 230, 115);
-
-    // 加上一些干擾雜訊線條，讓未過濾前更難用肉眼偷看
-    offCtx.strokeStyle = 'rgb(120, 120, 120)';
-    offCtx.lineWidth = 2;
-    for(let i = 0; i < 6; i++) {
-      offCtx.beginPath();
-      offCtx.moveTo(20, 40 + i * 28);
-      offCtx.lineTo(440, 180 - i * 25);
-      offCtx.stroke();
+    // 只要符合條件，就只畫出對應的純 R、純 G 或純 B 文字
+    if (mode === 'ALL' || mode === 'RED') {
+      ctx.fillStyle = 'rgb(255, 0, 0)'; // 100% 純紅
+      ctx.fillText(str1, 240, 78);
+    }
+    if (mode === 'ALL' || mode === 'GREEN') {
+      ctx.fillStyle = 'rgb(0, 255, 0)'; // 100% 純綠
+      ctx.fillText(str2, 240, 80);
+    }
+    if (mode === 'ALL' || mode === 'BLUE') {
+      ctx.fillStyle = 'rgb(0, 0, 255)'; // 100% 純藍
+      ctx.fillText(str3, 240, 82);
     }
   }
 
-  // 真實像素通道過濾器
-  function filterChannel(channel) {
-    // 切換按鈕高亮狀態
-    document.querySelectorAll('button').forEach(b => b.classList.remove('active'));
-    if(channel === 'R') document.getElementById('btn1').classList.add('active');
-    if(channel === 'G') document.getElementById('btn2').classList.add('active');
-    if(channel === 'B') document.getElementById('btn3').classList.add('active');
-    if(channel === 'ALL') document.getElementById('btnAll').classList.add('active');
-
-    const imgData = offCtx.getImageData(0, 0, offCanvas.width, offCanvas.height);
-    const data = imgData.data;
-
-    for (let i = 0; i < data.length; i += 4) {
-      let r = data[i];
-      let g = data[i + 1];
-      let b = data[i + 2];
-
-      if (channel === 'R') {
-        // 只保留紅色通道並轉成高對比亮白字，徹底消除綠與藍的干擾
-        let val = r > 150 ? 255 : 0;
-        data[i] = val; data[i + 1] = val * 0.3; data[i + 2] = val * 0.3;
-      } else if (channel === 'G') {
-        // 只保留綠色通道
-        let val = g > 150 ? 255 : 0;
-        data[i] = val * 0.3; data[i + 1] = val; data[i + 2] = val * 0.3;
-      } else if (channel === 'B') {
-        // 只保留藍色通道
-        let val = b > 150 ? 255 : 0;
-        data[i] = val * 0.4; data[i + 1] = val * 0.6; data[i + 2] = val;
-      }
-    }
-
-    ctx.putImageData(imgData, 0, 0);
-
-    if (channel === 'ALL') {
-      statusLog.innerText = '[訊號狀態] 三組文字數據高度重疊，無法直接辨識。';
-    } else {
-      statusLog.innerText = '[解析成功] 已透過光學通道濾鏡分離出單層隱藏文字！';
-    }
-  }
-
-  // 初始化
-  buildLayeredImage();
-  filterChannel('ALL');
+  // 網頁一打開，預設讓三串文字全部疊在一起
+  showLayer('ALL');
 </script>
+
 </body>
 </html>
